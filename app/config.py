@@ -31,3 +31,17 @@ ALLOWED_EXTENSIONS = {".osm", ".osc"}
 # Flask secret key (session/flash messages). A random one is generated when
 # the variable is absent; restarting the container then invalidates sessions.
 SECRET_KEY = os.environ.get("OSM_SECRET_KEY", "dev-insecure-secret-change-me")
+
+# Version identifier of the connectivity-check rule set implemented in
+# ``app.connectivity``.  Bump this value whenever the graph/classification
+# rules change; reports keep the version they were produced with.  A value
+# never seen in the database is registered as the newest rule revision at
+# startup, which makes earlier reports stale ("过期") and keeps them from
+# being presented as the current conclusion.
+CONNECTIVITY_RULE_VERSION = os.environ.get(
+    "OSM_CONNECTIVITY_RULE_VERSION", "connectivity-v1"
+).strip() or "connectivity-v1"
+
+# Hard upper bound on saved start/end node pairs.  The requirement is "at most
+# 20", so the environment can lower this but never raise it beyond 20.
+MAX_WATCH_PAIRS = min(_env_int("OSM_MAX_WATCH_PAIRS", 20), 20)

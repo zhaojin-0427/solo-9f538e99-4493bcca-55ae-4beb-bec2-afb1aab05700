@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 HIGHWAY_TAG = "highway"
 
@@ -31,6 +31,7 @@ class RoadFeature:
     name: str | None
     coordinates: list[list[float]]
     tags: dict[str, str]
+    refs_json: str | None = None
 
 
 @dataclass
@@ -40,9 +41,10 @@ class PendingWay:
     batch_id: int
     highway: str
     missing_node_ids: list[int]
+    refs: list[int] = field(default_factory=list)
 
 
-def _current_objects(conn: sqlite3.Connection, batch_id: int) -> dict[tuple, sqlite3.Row]:
+def current_objects(conn: sqlite3.Connection, batch_id: int) -> dict[tuple, sqlite3.Row]:
     """Return each object's highest-version state visible up to ``batch_id``."""
     rows = conn.execute(
         """
@@ -66,7 +68,7 @@ def _current_objects(conn: sqlite3.Connection, batch_id: int) -> dict[tuple, sql
 
 def build_road_layer(conn: sqlite3.Connection, batch_id: int):
     """Build (roads, pending_ways) for the committed batch ``batch_id``."""
-    objects = _current_objects(conn, batch_id)
+    objects = current_objects(conn, batch_id)
     roads: list[RoadFeature] = []
     pending: list[PendingWay] = []
 
@@ -97,6 +99,7 @@ def build_road_layer(conn: sqlite3.Connection, batch_id: int):
                 batch_id=row["batch_id"],
                 highway=tags[HIGHWAY_TAG],
                 missing_node_ids=missing,
+                refs=refs,
             ))
         else:
             roads.append(RoadFeature(
@@ -107,6 +110,7 @@ def build_road_layer(conn: sqlite3.Connection, batch_id: int):
                 name=tags.get("name"),
                 coordinates=coordinates,
                 tags=tags,
+                refs_json=row["refs_json"],
             ))
 
     return roads, pending

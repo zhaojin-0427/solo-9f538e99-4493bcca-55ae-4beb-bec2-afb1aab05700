@@ -10,6 +10,10 @@ services:
       OSM_SECRET_KEY: "change-me-in-production"
       OSM_DATA_DIR: "/data"
       OSM_MAX_UPLOAD_BYTES: "268435456"
+      # Connectivity-check rule revision implemented by this image.
+      OSM_CONNECTIVITY_RULE_VERSION: "connectivity-v1"
+      # Upper bound on saved start/end node pairs.
+      OSM_MAX_WATCH_PAIRS: "20"
     volumes:
       - osm_batch_data:/data
       # Sample files are mounted for manual try-outs; not required at runtime.

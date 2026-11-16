@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% block title %}连通性质检报告 #{{ report.id }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('connectivity_index') }}">← 返回连通性质检</a></p>
+
+<div class="card">
+  <h2>
+    质检报告 #{{ report.id }}
+    {% if report.stale %}<span class="badge rejected">已过期</span>
+    {% elif report.rule_version != running_rule_version %}<span class="badge processing">规则版本待部署</span>
+    {% else %}<span class="badge committed">当前规则</span>{% endif %}
+  </h2>
+  {% if report.stale %}
+  <div class="flash error">
+    本报告已过期，不能作为当前结论。{{ report.stale_reason }}
+  </div>
+  {% endif %}
+  <div class="grid">
+    <div class="stat"><b>#{{ report.from_batch_id }}</b>起始批次<span class="mono">{{ report.from_filename }}</span></div>
+    <div class="stat"><b>#{{ report.to_batch_id }}</b>结束批次<span class="mono">{{ report.to_filename }}</span></div>
+    <div class="stat"><b>{{ summary.pair_count }}</b>参与比对起终点组</div>
+    <div class="stat"><b>{{ report.rule_version }}</b>使用的规则版本</div>
+  </div>
+  <p class="muted" style="margin-top:12px">
+    生成时间：<span class="mono">{{ report.created_at }}</span>
+    {% if report.stale %} · 当前规则版本：<span class="mono">{{ newest_rule }}</span>{% endif %}
+  </p>
+</div>
+
+<div class="card">
+  <h2>结果分类</h2>
+  <div class="grid">
+    <div class="stat"><b>{{ summary.new_disconnection }}</b>新增断连</div>
+    <div class="stat"><b>{{ summary.recovered }}</b>恢复连通</div>
+    <div class="stat"><b>{{ summary.unchanged }}</b>未变化</div>
+    <div class="stat"><b>{{ summary.endpoint_missing_pairs }}</b>端点缺失（单列）</div>
+  </div>
+  <p class="muted">
+    端点缺失组不计入新增断连、恢复连通或未变化，也不算作断连或恢复。
+  </p>
+</div>
+
+{% set judged = [] %}
+{% set missing = [] %}
+{% for it in items %}
+  {% if it.category == 'endpoint_missing' %}{% set _ = missing.append(it) %}{% else %}{% set _ = judged.append(it) %}{% endif %}
+{% endfor %}
+
+<div class="card">
+  <h2>连通性判定（{{ judged|length }} 组）</h2>
+  {% if judged %}
+  <table>
+    <thead>
+      <tr>
+        <th>起终点组</th><th>起点 node</th><th>终点 node</th>
+        <th>起始批次</th><th>结束批次</th><th>分类</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for it in judged %}
+      <tr>
+        <td>{{ it.label or '—' }}</td>
+        <td class="mono">{{ it.start_node_id }}</td>
+        <td class="mono">{{ it.end_node_id }}</td>
+        <td>{{ state_labels[it.old_state] }}</td>
+        <td>{{ state_labels[it.new_state] }}</td>
+        <td><span class="badge {{ 'rejected' if it.category == 'new_disconnection' else ('committed' if it.category == 'recovered' else 'processing') }}">{{ category_labels[it.category] }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">没有可判定的起终点组（全部端点缺失）。</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>端点缺失（{{ missing|length }} 组，单列，不参与断连/恢复判定）</h2>
+  {% if missing %}
+  <table>
+    <thead>
+      <tr><th>起终点组</th><th>起点 node</th><th>终点 node</th><th>起始批次端点情况</th><th>结束批次端点情况</th><th>缺失 node</th></tr>
+    </thead>
+    <tbody>
+      {% for it in missing %}
+      <tr>
+        <td>{{ it.label or '—' }}</td>
+        <td class="mono">{{ it.start_node_id }}</td>
+        <td class="mono">{{ it.end_node_id }}</td>
+        <td>
+          {% if it.old_endpoints.start == 'present' and it.old_endpoints.end == 'present' %}两端点均在道路上{% else %}
+            {% if it.old_endpoints.start != 'present' %}起点：{{ endpoint_labels[it.old_endpoints.start] }}{% endif %}
+            {% if it.old_endpoints.start != 'present' and it.old_endpoints.end != 'present' %}<br>{% endif %}
+            {% if it.old_endpoints.end != 'present' %}终点：{{ endpoint_labels[it.old_endpoints.end] }}{% endif %}
+          {% endif %}
+        </td>
+        <td>
+          {% if it.new_endpoints.start == 'present' and it.new_endpoints.end == 'present' %}两端点均在道路上{% else %}
+            {% if it.new_endpoints.start != 'present' %}起点：{{ endpoint_labels[it.new_endpoints.start] }}{% endif %}
+            {% if it.new_endpoints.start != 'present' and it.new_endpoints.end != 'present' %}<br>{% endif %}
+            {% if it.new_endpoints.end != 'present' %}终点：{{ endpoint_labels[it.new_endpoints.end] }}{% endif %}
+          {% endif %}
+        </td>
+        <td class="mono">
+          {% if it.old_missing %}起始批次 {{ it.old_missing|join(', ') }}{% endif %}
+          {% if it.new_missing %}{% if it.old_missing %}<br>{% endif %}结束批次 {{ it.new_missing|join(', ') }}{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">没有端点缺失的起终点组。</p>
+  {% endif %}
+  <p class="muted">
+    端点缺失包括：节点从未入仓或已删除，以及节点仅被待补全 way 引用、不在任何完整道路上。
+    待补全 way 整条不连边，缺失端点单列，不算断连或恢复。
+  </p>
+</div>
+
+<div class="card">
+  <h2>判定规则</h2>
+  <p class="muted">
+    只用完整 highway way，按相邻引用节点连边（way 是一条链，不是全连接）。
+    任一引用节点缺失或已删除的 way 整条不连边，其缺失节点单列（不算断连或恢复）。
+    起终点只有在两个批次中都属于完整道路网络时才参与连通/断连比对。
+    报告生成后内容固定，后续入仓不会改写历史报告；规则修订后旧报告标记为过期，仅供留档。
+  </p>
+  <table>
+    <thead><tr><th>批次</th><th>待补全 way（整条不连边）</th><th>缺失 / 已删除节点 id</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>#{{ report.from_batch_id }}（起始）</td>
+        <td class="mono">{{ summary.from_pending.pending_way_ids|join(', ') or '无' }}</td>
+        <td class="mono">{{ summary.from_pending.missing_node_ids|join(', ') or '无' }}</td>
+      </tr>
+      <tr>
+        <td>#{{ report.to_batch_id }}（结束）</td>
+        <td class="mono">{{ summary.to_pending.pending_way_ids|join(', ') or '无' }}</td>
+        <td class="mono">{{ summary.to_pending.missing_node_ids|join(', ') or '无' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

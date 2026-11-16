@@ -32,10 +32,19 @@
     .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
     .stat { border:1px solid var(--line); border-radius:8px; padding:12px; background:var(--bg); }
     .stat b { font-size:22px; display:block; }
+    .inline-form { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
+    .inline-form label { display:flex; flex-direction:column; gap:4px; font-size:13px; }
+    .inline-form input, .inline-form select { padding:6px 8px; border:1px solid var(--line); border-radius:6px; font-size:14px; }
+    .btn[disabled] { background:#8c959f; cursor:not-allowed; }
   </style>
 </head>
 <body>
-  <header><a href="{{ url_for('index') }}">OSM 道路批次入仓系统</a></header>
+  <header><a href="{{ url_for('index') }}">OSM 道路批次入仓系统</a>
+    <nav style="display:inline; margin-left:24px; font-size:14px;">
+      <a href="{{ url_for('index') }}" style="margin-right:16px; font-weight:400;">批次入仓</a>
+      <a href="{{ url_for('connectivity_index') }}" style="font-weight:400;">连通性质检</a>
+    </nav>
+  </header>
   <main>
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}

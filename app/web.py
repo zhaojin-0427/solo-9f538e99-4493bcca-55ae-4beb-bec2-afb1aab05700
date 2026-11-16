@@ -15,6 +15,8 @@ from .db import connect, init_db
 from .ingestion import BatchRejected, ingest_stream
 from .osm_parser import OSMParseError
 from .roads import batch_summary, build_road_layer, road_geojson
+from . import connectivity
+from .connectivity import ConnectivityError
 
 
 def create_app(db_path=None) -> Flask:
@@ -134,6 +136,123 @@ def create_app(db_path=None) -> Flask:
             mimetype="application/geo+json",
             as_attachment=True,
             download_name=f"batch_{batch_id}_highways.geojson",
+        )
+
+    # ------------------------------------------------------------------
+    # Connectivity quality check
+    # ------------------------------------------------------------------
+
+    def _committed_batches(conn):
+        return conn.execute(
+            "SELECT id, filename, created_at FROM batches "
+            "WHERE status = 'committed' ORDER BY id"
+        ).fetchall()
+
+    def _connectivity_context(conn):
+        return {
+            "pairs": connectivity.list_pairs(conn),
+            "batches": _committed_batches(conn),
+            "max_pairs": config.MAX_WATCH_PAIRS,
+            "running_rule_version": config.CONNECTIVITY_RULE_VERSION,
+            "rule_version": connectivity.current_rule_version(conn)["version"],
+            "reports": connectivity.list_reports(conn),
+        }
+
+    @app.route("/connectivity")
+    def connectivity_index():
+        conn = get_conn()
+        return render_template("connectivity.html", **_connectivity_context(conn))
+
+    @app.route("/connectivity/pairs", methods=["POST"])
+    def connectivity_add_pair():
+        conn = get_conn()
+        try:
+            connectivity.add_pair(
+                conn,
+                request.form.get("start_node_id", ""),
+                request.form.get("end_node_id", ""),
+                request.form.get("label", ""),
+            )
+            flash("起终点 node 组已保存。", "success")
+        except ConnectivityError as exc:
+            flash(f"未保存：{exc}", "error")
+        return redirect(url_for("connectivity_index"))
+
+    @app.route("/connectivity/pairs/<int:pair_id>/delete", methods=["POST"])
+    def connectivity_delete_pair(pair_id: int):
+        conn = get_conn()
+        connectivity.delete_pair(conn, pair_id)
+        flash(f"起终点组 #{pair_id} 已删除（历史报告保留快照）。", "success")
+        return redirect(url_for("connectivity_index"))
+
+    @app.route("/connectivity/rule-version", methods=["POST"])
+    def connectivity_rule_version():
+        conn = get_conn()
+        version = (request.form.get("rule_version") or "").strip()
+        try:
+            connectivity.register_rule_version(conn, version)
+        except ConnectivityError as exc:
+            flash(f"未登记规则版本：{exc}", "error")
+            return redirect(url_for("connectivity_index"))
+
+        newest = connectivity.current_rule_version(conn)["version"]
+        if version != newest:
+            flash(
+                f"规则版本 {version} 此前已登记，且不是当前最新版本；"
+                f"最新规则版本仍为 {newest}，已追加登记的版本不会回退规则历史。",
+                "error",
+            )
+        elif version != config.CONNECTIVITY_RULE_VERSION:
+            flash(
+                f"规则版本 {version} 已登记为最新；当前运行的代码实现的是 "
+                f"{config.CONNECTIVITY_RULE_VERSION}，因此此后由本代码生成的报告"
+                "都会标为过期，直到部署实现该规则的版本。",
+                "error",
+            )
+        else:
+            flash(
+                f"规则版本 {version} 已登记为最新；此前生成的报告已标记为过期，"
+                "仅供留档，不再作为当前结论。",
+                "success",
+            )
+        return redirect(url_for("connectivity_index"))
+
+    @app.route("/connectivity/reports", methods=["POST"])
+    def connectivity_create_report():
+        conn = get_conn()
+
+        def form_int(field: str, label: str) -> int:
+            raw = (request.form.get(field) or "").strip()
+            try:
+                return int(raw)
+            except ValueError as exc:
+                raise ConnectivityError(f"{label}必须是整数批次号") from exc
+
+        try:
+            from_batch = form_int("from_batch_id", "起始批次")
+            to_batch = form_int("to_batch_id", "结束批次")
+            report_id = connectivity.create_report(conn, from_batch, to_batch)
+        except ConnectivityError as exc:
+            flash(f"未生成报告：{exc}", "error")
+            return redirect(url_for("connectivity_index"))
+        return redirect(url_for("connectivity_report", report_id=report_id))
+
+    @app.route("/connectivity/reports/<int:report_id>")
+    def connectivity_report(report_id: int):
+        conn = get_conn()
+        report, items, summary = connectivity.load_report(conn, report_id)
+        if report is None:
+            abort(404)
+        return render_template(
+            "connectivity_report.html",
+            report=report,
+            items=items,
+            summary=summary,
+            category_labels=connectivity.CATEGORY_LABELS,
+            state_labels=connectivity.STATE_LABELS,
+            endpoint_labels=connectivity.ENDPOINT_LABELS,
+            newest_rule=connectivity.current_rule_version(conn)["version"],
+            running_rule_version=config.CONNECTIVITY_RULE_VERSION,
         )
 
     @app.errorhandler(413)
