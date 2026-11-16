@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}批次 #{{ batch.id }} 详情{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('index') }}">← 返回批次列表</a></p>
+
+<div class="card">
+  <h2>批次 #{{ batch.id }}：<span class="mono">{{ batch.filename }}</span></h2>
+  <p>
+    状态：<span class="badge {{ batch.status }}">
+      {% if batch.status == 'committed' %}已提交{% elif batch.status == 'rejected' %}已拒绝{% else %}处理中{% endif %}
+    </span>
+    &nbsp; 入仓时间：<span class="mono">{{ batch.created_at }}</span>
+  </p>
+  {% if batch.error %}<p style="color:var(--err)" class="mono">{{ batch.error }}</p>{% endif %}
+
+  {% if batch.status == 'committed' %}
+  <div class="grid">
+    <div class="stat"><b>{{ summary.node_visible }}</b>可见 node</div>
+    <div class="stat"><b>{{ summary.node_deleted }}</b>已删除 node（保留版本）</div>
+    <div class="stat"><b>{{ summary.way_visible }}</b>可见 way</div>
+    <div class="stat"><b>{{ summary.way_deleted }}</b>已删除 way（保留版本）</div>
+  </div>
+  <p style="margin-top:16px">
+    <a class="btn" href="{{ url_for('geojson', batch_id=batch.id) }}">下载本批道路 GeoJSON</a>
+    <span class="muted">导出为只读快照，导出期间其他批次仍可提交。</span>
+  </p>
+  {% endif %}
+</div>
+
+{% if batch.status == 'committed' %}
+<div class="card">
+  <h2>道路图层（带 highway 标签的 way，共 {{ roads|length }} 条可导出）</h2>
+  {% if roads %}
+  <table>
+    <thead><tr><th>way id</th><th>version</th><th>highway</th><th>名称</th><th>来源批次</th><th>有序坐标点数</th></tr></thead>
+    <tbody>
+      {% for r in roads %}
+      <tr>
+        <td class="mono">{{ r.way_id }}</td>
+        <td>v{{ r.version }}</td>
+        <td class="mono">{{ r.highway }}</td>
+        <td>{{ r.name or '—' }}</td>
+        <td>#{{ r.batch_id }}</td>
+        <td>{{ r.coordinates|length }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">本批次快照中没有可导出的完整道路。</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>待补全道路（{{ pending|length }} 条，缺节点，不进入 GeoJSON）</h2>
+  {% if pending %}
+  <table>
+    <thead><tr><th>way id</th><th>version</th><th>highway</th><th>来源批次</th><th>缺失 / 已删除节点 id</th></tr></thead>
+    <tbody>
+      {% for p in pending %}
+      <tr>
+        <td class="mono">{{ p.way_id }}</td>
+        <td>v{{ p.version }}</td>
+        <td class="mono">{{ p.highway }}</td>
+        <td>#{{ p.batch_id }}</td>
+        <td class="mono">{{ p.missing_node_ids | join(', ') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="muted">待补全是该批次当时的结果；后续批次补齐节点后，新批次导出中道路自动恢复，历史批次仍保持待补全。</p>
+  {% else %}
+  <p class="muted">无待补全道路。</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

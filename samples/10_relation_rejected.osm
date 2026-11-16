@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  样例 10：含 relation，整批拒绝（.osm）
+  场景：系统只接收 node/way。文件里出现 relation，
+  即使 node 部分合法也必须整批拒绝，node v1000 不会入仓。
+-->
+<osm version="0.6" generator="osm-batch-demo">
+  <node id="1000" version="1" lat="31.24000" lon="121.48000"/>
+  <relation id="900" version="1">
+    <member type="node" ref="1000" role=""/>
+    <tag k="type" v="benchmark"/>
+  </relation>
+</osm>

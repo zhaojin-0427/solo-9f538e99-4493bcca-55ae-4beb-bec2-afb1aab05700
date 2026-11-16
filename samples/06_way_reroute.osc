@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  样例 06：way 改引用（改线），旧节点不再影响它（.osc）
+  场景：w101 发布 v2，不再引用被删除的 n4，改走 n6/n9；
+  改线后 w101 恢复为完整道路，且 n4 的删除永远不再影响 w101。
+-->
+<osmChange version="0.6" generator="osm-batch-demo">
+  <modify>
+    <way id="101" version="2">
+      <nd ref="3"/><nd ref="6"/><nd ref="9"/>
+      <tag k="highway" v="tertiary"/>
+      <tag k="name" v="人民支路（改线）"/>
+    </way>
+  </modify>
+</osmChange>

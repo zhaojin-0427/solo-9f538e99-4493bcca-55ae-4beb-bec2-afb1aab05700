@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  样例 02：缺节点的新道路（.osm）
+  场景：w102 引用了尚未入仓的 n9，整条 way 进入“待补全”，不进入 GeoJSON。
+  w101 被原样重传（同版同内容），应计为重复跳过。
+-->
+<osm version="0.6" generator="osm-batch-demo">
+  <node id="6" version="1" lat="31.23440" lon="121.47770"/>
+  <way id="102" version="1">
+    <nd ref="5"/><nd ref="6"/><nd ref="9"/>
+    <tag k="highway" v="service"/>
+    <tag k="name" v="待补全小路"/>
+  </way>
+  <way id="101" version="1">
+    <nd ref="3"/><nd ref="4"/><nd ref="5"/>
+    <tag k="highway" v="tertiary"/>
+    <tag k="name" v="人民支路"/>
+  </way>
+</osm>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  样例 07：乱序变更 + 同批前向引用（.osc）
+  场景：
+  1) 变更块顺序与节点/way 顺序均为乱序（way 先于其引用的节点出现），
+     解析结果与顺序无关，w103 引用本批新建的 n7/n8，同批即可成路；
+  2) n8 在同一文件里出现两次且内容完全一致，作为文件内重复跳过；
+  3) n1 在同文件内连续给了 v2、v3 两个版本，最终以 v3 为准。
+-->
+<osmChange version="0.6" generator="osm-batch-demo">
+  <modify>
+    <way id="103" version="1">
+      <nd ref="7"/><nd ref="8"/>
+      <tag k="highway" v="footway"/>
+      <tag k="name" v="乱序步行街"/>
+    </way>
+    <node id="1" version="2" lat="31.23041" lon="121.47371"/>
+  </modify>
+  <create>
+    <node id="7" version="1" lat="31.23600" lon="121.47930"/>
+    <node id="8" version="1" lat="31.23680" lon="121.48010"/>
+    <node id="8" version="1" lat="31.23680" lon="121.48010"/>
+    <node id="1" version="3" lat="31.23055" lon="121.47385"/>
+  </create>
+</osmChange>

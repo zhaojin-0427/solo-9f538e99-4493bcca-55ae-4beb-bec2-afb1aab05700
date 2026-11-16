@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+  <h2>上传入仓文件（仅含 node / way 的 .osm 或 .osc）</h2>
+  <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+    <input type="file" name="osm_file" accept=".osm,.osc" required>
+    <button class="btn" type="submit">按批次入仓</button>
+  </form>
+  <p class="muted">
+    每个文件作为一个独立批次，解析与合并在单个事务内整体生效；同版异内容、含 relation 等情况会整批拒绝，不留半批。
+    旧版本自动忽略，重复同版自动跳过，删除以墓碑版本保留。
+  </p>
+</div>
+
+<div class="card">
+  <h2>入仓批次（{{ batches|length }}）</h2>
+  {% if batches %}
+  <table>
+    <thead>
+      <tr>
+        <th>批次</th><th>文件名</th><th>状态</th><th>入仓时间 (UTC)</th>
+        <th>本批对象版本数</th><th>说明 / 错误</th><th>操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in batches %}
+      <tr>
+        <td>#{{ b.id }}</td>
+        <td class="mono">{{ b.filename }}</td>
+        <td><span class="badge {{ b.status }}">
+          {% if b.status == 'committed' %}已提交{% elif b.status == 'rejected' %}已拒绝{% else %}处理中{% endif %}
+        </span></td>
+        <td class="mono">{{ b.created_at }}</td>
+        <td>{{ row_counts[loop.index0] }}</td>
+        <td>{% if b.error %}<span class="mono" style="color:var(--err)">{{ b.error }}</span>{% else %}—{% endif %}</td>
+        <td>
+          <a href="{{ url_for('batch_detail', batch_id=b.id) }}">详情</a>
+          {% if b.status == 'committed' %}
+            · <a href="{{ url_for('geojson', batch_id=b.id) }}">下载 GeoJSON</a>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">暂无批次，请先上传 samples/ 目录中的样例文件。</p>
+  {% endif %}
+</div>
+{% endblock %}

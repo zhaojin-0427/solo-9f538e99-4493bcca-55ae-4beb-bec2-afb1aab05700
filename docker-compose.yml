@@ -1,0 +1,25 @@
+services:
+  osm-batch:
+    build: .
+    image: osm-batch-ingest:latest
+    container_name: osm-batch-ingest
+    ports:
+      - "8000:8000"
+    environment:
+      # Override in real deployments.
+      OSM_SECRET_KEY: "change-me-in-production"
+      OSM_DATA_DIR: "/data"
+      OSM_MAX_UPLOAD_BYTES: "268435456"
+    volumes:
+      - osm_batch_data:/data
+      # Sample files are mounted for manual try-outs; not required at runtime.
+      - ./samples:/samples:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  osm_batch_data:

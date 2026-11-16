@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  样例 01：基础分区摘录（.osm）
+  场景：5 个 node + 3 条 way。w100/w101 是带 highway 标签的道路；
+  w200 只有 building 标签，不会进入道路图层。n3 是 w100 与 w101 的共享节点。
+-->
+<osm version="0.6" generator="osm-batch-demo">
+  <node id="1" version="1" lat="31.23040" lon="121.47370">
+    <tag k="highway" v="traffic_signals"/>
+  </node>
+  <node id="2" version="1" lat="31.23120" lon="121.47450"/>
+  <node id="3" version="1" lat="31.23200" lon="121.47530"/>
+  <node id="4" version="1" lat="31.23280" lon="121.47610"/>
+  <node id="5" version="1" lat="31.23360" lon="121.47690"/>
+
+  <way id="100" version="1">
+    <nd ref="1"/><nd ref="2"/><nd ref="3"/>
+    <tag k="highway" v="residential"/>
+    <tag k="name" v="南京里弄"/>
+  </way>
+  <way id="101" version="1">
+    <nd ref="3"/><nd ref="4"/><nd ref="5"/>
+    <tag k="highway" v="tertiary"/>
+    <tag k="name" v="人民支路"/>
+  </way>
+  <way id="200" version="1">
+    <nd ref="1"/><nd ref="2"/><nd ref="3"/><nd ref="1"/>
+    <tag k="building" v="yes"/>
+  </way>
+</osm>

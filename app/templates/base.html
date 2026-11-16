@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}OSM 道路批次入仓{% endblock %}</title>
+  <style>
+    :root { --line:#d0d7de; --bg:#f6f8fa; --ok:#1a7f37; --err:#cf222e; --muted:#656d76; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; color:#1f2328; }
+    header { background:#0f2f56; color:#fff; padding:14px 24px; }
+    header a { color:#fff; text-decoration:none; font-weight:600; font-size:18px; }
+    main { max-width:1080px; margin:24px auto; padding:0 20px; }
+    .card { border:1px solid var(--line); border-radius:8px; padding:18px 20px; margin-bottom:20px; background:#fff; }
+    h2 { margin-top:0; font-size:17px; }
+    table { border-collapse:collapse; width:100%; font-size:14px; }
+    th, td { border:1px solid var(--line); padding:8px 10px; text-align:left; vertical-align:top; }
+    th { background:var(--bg); }
+    .badge { display:inline-block; padding:2px 9px; border-radius:999px; font-size:12px; font-weight:600; }
+    .committed { background:#dafbe1; color:var(--ok); }
+    .rejected { background:#ffebe9; color:var(--err); }
+    .processing { background:#fff8c5; color:#9a6700; }
+    .flash { padding:10px 14px; border-radius:6px; margin-bottom:14px; font-size:14px; }
+    .flash.success { background:#dafbe1; border:1px solid #aceebb; }
+    .flash.error { background:#ffebe9; border:1px solid #ffabaf; }
+    .muted { color:var(--muted); font-size:13px; }
+    code { background:var(--bg); padding:1px 5px; border-radius:4px; }
+    .btn { display:inline-block; padding:7px 14px; border-radius:6px; background:#0969da; color:#fff;
+           text-decoration:none; font-size:14px; border:0; cursor:pointer; }
+    .btn.secondary { background:#fff; color:#0969da; border:1px solid #0969da; }
+    .mono { font-family:ui-monospace, Menlo, Consolas, monospace; }
+    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+    .stat { border:1px solid var(--line); border-radius:8px; padding:12px; background:var(--bg); }
+    .stat b { font-size:22px; display:block; }
+  </style>
+</head>
+<body>
+  <header><a href="{{ url_for('index') }}">OSM 道路批次入仓系统</a></header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  样例 08：同版异内容，必须整批拒绝（.osc）
+  场景：n2 的 v1 已在样例 01 入仓，坐标为 31.23120 / 121.47450；
+  本文件再次提交 n2 v1 但坐标不同，触发“同版异内容”冲突。
+  同批的 w104 即使本身合法，也必须随整批回滚，库中查不到 w104。
+-->
+<osmChange version="0.6" generator="osm-batch-demo">
+  <modify>
+    <node id="2" version="1" lat="31.99999" lon="121.99999"/>
+    <way id="104" version="1">
+      <nd ref="7"/><nd ref="8"/>
+      <tag k="highway" v="path"/>
+      <tag k="name" v="不应存在的路"/>
+    </way>
+  </modify>
+</osmChange>

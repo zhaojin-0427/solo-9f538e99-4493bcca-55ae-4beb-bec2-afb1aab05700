@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  样例 04：删除共享节点（.osc）
+  场景：n4 被删除（墓碑版本 v2，版本号保留在库中）。w101 未重传，
+  但因引用的 n4 消失，在本批快照中整条撤下为待补全；w100 不引用 n4，不受影响。
+-->
+<osmChange version="0.6" generator="osm-batch-demo">
+  <delete>
+    <node id="4" version="2"/>
+  </delete>
+</osmChange>

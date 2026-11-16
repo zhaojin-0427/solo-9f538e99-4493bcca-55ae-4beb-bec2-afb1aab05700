@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  样例 05：旧版重传，不能恢复对象（.osc）
+  场景：n4 当前最高版本是 v2（删除）。这里重传 v1（旧版、可见），
+  必须被整体当作“旧版忽略”，n4 保持删除状态，w101 继续待补全。
+  另外重传 n3 v2 同版同内容，应作为重复跳过。
+-->
+<osmChange version="0.6" generator="osm-batch-demo">
+  <create>
+    <node id="4" version="1" lat="31.23280" lon="121.47610"/>
+    <node id="3" version="2" lat="31.23225" lon="121.47565"/>
+  </create>
+</osmChange>

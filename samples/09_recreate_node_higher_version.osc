@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  样例 09：恢复被删除的共享节点（.osc）
+  场景：n4 当前为 v2 墓碑。以更高版本 v3 重新创建节点后，
+  注意 w101 已在样例 06 改线、不再引用 n4，所以 w101 不受影响；
+  本样例验证“删除后仍保留版本、只有更高版本才能改变状态”。
+-->
+<osmChange version="0.6" generator="osm-batch-demo">
+  <create>
+    <node id="4" version="3" lat="31.23290" lon="121.47620"/>
+  </create>
+</osmChange>

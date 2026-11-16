@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  样例 03：补齐缺失节点（.osc）
+  场景：补传 n9 v1 后，w102 自动恢复为完整道路；
+  同时共享节点 n3 移动到新坐标（v2），即使 w100/w101 没有重传，
+  本批及以后的导出中两条路的几何都会更新。
+-->
+<osmChange version="0.6" generator="osm-batch-demo">
+  <create>
+    <node id="9" version="1" lat="31.23520" lon="121.47850"/>
+  </create>
+  <modify>
+    <node id="3" version="2" lat="31.23225" lon="121.47565"/>
+  </modify>
+</osmChange>
